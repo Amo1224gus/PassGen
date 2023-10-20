@@ -1,2 +1,2 @@
 # PassGen
-PassGen - is just easy password generator
+// PassGen is a simple password generation program created in C#. Its source code can be used for commercial purposes.
