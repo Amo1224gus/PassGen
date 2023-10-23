@@ -7,54 +7,70 @@ class PassGen
     static void Main()
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
-
         Console.Title = "Password Generator";
-
         Console.Clear();
-
         Console.ForegroundColor = ConsoleColor.White;
+
         Console.WriteLine("===================================");
-        Console.WriteLine("      Password Generator");
+        Console.WriteLine("      Генератор паролей");
         Console.WriteLine("===================================");
 
         string lastPassword = LoadLastPassword();
-
         if (!string.IsNullOrWhiteSpace(lastPassword))
         {
-            Console.WriteLine("Last Generated Password / Последний сгенерированный пароль:");
+            Console.WriteLine("Последний сгенерированный пароль:");
             Console.WriteLine(lastPassword);
             Console.WriteLine();
         }
 
-        Console.WriteLine("Choose a language / Выберите язык:");
-        Console.WriteLine("1. English");
-        Console.WriteLine("2. Русский");
+        Console.WriteLine("Выберите язык:");
+        Console.WriteLine("1. Русский");
+        Console.WriteLine("2. English");
 
-        int languageChoice = int.Parse(Console.ReadLine());
+        int languageChoice;
+        if (!int.TryParse(Console.ReadLine(), out languageChoice) || languageChoice < 1 || languageChoice > 2)
+        {
+            Console.WriteLine("Неверный выбор языка. Завершение.");
+            return;
+        }
+
         bool useEnglish = (languageChoice == 1);
 
-        string languagePrompt = useEnglish ? "How many characters should the password have:" : "Сколько символов должно быть в пароле:";
-        string includeNumbersPrompt = useEnglish ? "Include numbers in the password? (yes/no):" : "Будут ли цифры в пароле (да/нет):";
-        string includeUppercasePrompt = useEnglish ? "Include uppercase letters in the password? (yes/no):" : "Будут ли заглавные буквы в пароле (да/нет):";
+        string languagePrompt = useEnglish ? "Сколько символов должно быть в пароле:" : "How many characters should the password have:";
+        string includeNumbersPrompt = useEnglish ? "Включить цифры в пароле? (да/нет):" : "Include numbers in the password? (yes/no):";
+        string includeUppercasePrompt = useEnglish ? "Включить заглавные буквы в пароле? (да/нет):" : "Include uppercase letters in the password? (yes/no):";
 
         Console.WriteLine(languagePrompt);
-        int passwordLength = int.Parse(Console.ReadLine());
+
+        int passwordLength;
+        if (!int.TryParse(Console.ReadLine(), out passwordLength) || passwordLength < 1)
+        {
+            Console.WriteLine("Неверная длина пароля. Завершение.");
+            return;
+        }
 
         Console.WriteLine(includeNumbersPrompt);
-        bool includeNumbers = Console.ReadLine().ToLower() == (useEnglish ? "yes" : "да");
+        bool includeNumbers = Console.ReadLine().Trim().Equals(useEnglish ? "да" : "yes", StringComparison.OrdinalIgnoreCase);
 
         Console.WriteLine(includeUppercasePrompt);
-        bool includeUppercase = Console.ReadLine().ToLower() == (useEnglish ? "yes" : "да");
+        bool includeUppercase = Console.ReadLine().Trim().Equals(useEnglish ? "да" : "yes", StringComparison.OrdinalIgnoreCase);
 
-        Console.WriteLine(useEnglish ? "Include a keyword in the password? (Type the keyword or 'no' to skip):" : "Включить ключевое слово в пароль? (Введите ключевое слово или 'нет' для пропуска):");
-        string keyword = Console.ReadLine();
-        bool useKeyword = !string.Equals(keyword, (useEnglish ? "no" : "нет"), StringComparison.OrdinalIgnoreCase);
+        Console.WriteLine(useEnglish ? "Включить ключевое слово в пароль? (Введите ключевое слово или 'нет' для пропуска):" : "Include a keyword in the password? (Type the keyword or 'no' to skip):");
+        string keyword = Console.ReadLine().Trim();
+        bool useKeyword = !string.Equals(keyword, useEnglish ? "нет" : "no", StringComparison.OrdinalIgnoreCase);
 
-        string keywordLocation = "anywhere"; // По умолчанию размещаем ключевое слово где угодно
+        string keywordLocation = "anywhere";
         if (useKeyword)
         {
-            Console.WriteLine(useEnglish ? "Where would you like the keyword in the password? (1 for beginning, 2 for end, 3 for anywhere):" : "Где вы хотите разместить ключевое слово в пароле? (1 для начала, 2 для конца, 3 для произвольного места):");
-            int keywordLocationChoice = int.Parse(Console.ReadLine());
+            Console.WriteLine(useEnglish ? "Где вы хотите разместить ключевое слово в пароле? (1 для начала, 2 для конца, 3 для произвольного места):" : "Where would you like the keyword in the password? (1 for beginning, 2 for end, 3 for anywhere):");
+
+            int keywordLocationChoice;
+            if (!int.TryParse(Console.ReadLine(), out keywordLocationChoice) || keywordLocationChoice < 1 || keywordLocationChoice > 3)
+            {
+                Console.WriteLine("Неверный выбор расположения ключевого слова. Завершение.");
+                return;
+            }
+
             switch (keywordLocationChoice)
             {
                 case 1:
@@ -72,31 +88,40 @@ class PassGen
         string password = GeneratePassword(passwordLength, includeNumbers, includeUppercase, useKeyword, keyword, keywordLocation);
 
         Console.WriteLine("===================================");
-        Console.WriteLine(useEnglish ? "Generated password: " + password : "Сгенерированный пароль: " + password);
+        Console.WriteLine(useEnglish ? "Сгенерированный пароль: " + password : "Generated password: " + password);
         Console.WriteLine("===================================");
 
-        SaveLastPassword(password);
+        bool savePassword = AskToSavePassword(useEnglish);
+        if (savePassword)
+        {
+            SaveLastPassword(password);
+            Console.WriteLine("Пароль сохранен.");
+        }
 
-        string thankYouMessage = useEnglish ? "Thank you for using the Password Generator!" : "Спасибо за использование генератора паролей!";
+        CheckPasswordComplexity(password, useEnglish);
+
+        string thankYouMessage = useEnglish ? "Спасибо за использование Генератора паролей!" : "Thank you for using the Password Generator!";
         Console.WriteLine(thankYouMessage);
 
-        // Добавляем указание на YouTube, Discord, Roblox и Donation Alerts с цветовой разметкой
         Console.WriteLine("===================================");
-        Console.WriteLine(useEnglish ? "Your Social Media Accounts:" : "Ваши аккаунты в социальных сетях:");
+        Console.WriteLine(useEnglish ? "Our Social Media Accounts:" : "Наши аккаунты в социальных сетях:");
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine("1. YouTube: [https://www.youtube.com/channel/UCn9Zun7UjdOkJOGaArUgxJg]");
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("2. Discord: [https://discordapp.com/users/987666543586467880/ or @ega_biba]");
         Console.ForegroundColor = ConsoleColor.Gray;
-        Console.WriteLine("3. Roblox: amogus1224_egor");
+        Console.WriteLine("3. Roblox: [amogus1224_egor]");
         Console.ForegroundColor = ConsoleColor.DarkYellow;
-        Console.WriteLine("4. Donation Alerts: donationalerts.com/r/amo1224gus");
-        Console.ResetColor(); // Сбрасываем цвет фона и текста
-        Console.WriteLine("===================================");
+        Console.WriteLine("4. Donation Alerts: [https://donationalerts.com/r/amo1224gus]");
+        Console.ResetColor();
 
-        // Просим пользователя нажать клавишу дважды перед закрытием
+        Console.WriteLine("===================================");
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.WriteLine("5. И доработки кода, фич сделал [https://github.com/zzadryzz]");
+        Console.ResetColor();
+
         Console.WriteLine(useEnglish ? "Press any key to exit..." : "Нажмите любую клавишу для выхода...");
-        Console.ReadKey(); // Ожидаем два нажатия клавиши
+        Console.ReadKey();
     }
 
     static string GeneratePassword(int length, bool includeNumbers, bool includeUppercase, bool useKeyword, string keyword, string keywordLocation)
@@ -113,7 +138,7 @@ class PassGen
 
         Random random = new Random();
         string password = new string(Enumerable.Repeat(chars, length)
-          .Select(s => s[random.Next(s.Length)]).ToArray());
+            .Select(s => s[random.Next(s.Length)]).ToArray());
 
         if (useKeyword)
         {
@@ -127,7 +152,6 @@ class PassGen
             }
             else // keywordLocation == "anywhere"
             {
-                // Вставляем ключевое слово в случайное место в пароле
                 int keywordPosition = random.Next(length - keyword.Length + 1);
                 password = password.Substring(0, keywordPosition) + keyword + password.Substring(keywordPosition + keyword.Length);
             }
@@ -144,7 +168,7 @@ class PassGen
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error while saving the last password: " + ex.Message);
+            Console.WriteLine("Ошибка при сохранении последнего пароля: " + ex.Message);
         }
     }
 
@@ -159,9 +183,28 @@ class PassGen
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error while loading the last password: " + ex.Message);
+            Console.WriteLine("Ошибка при загрузке последнего пароля: " + ex.Message);
         }
 
         return "";
+    }
+
+    static bool AskToSavePassword(bool useEnglish)
+    {
+        Console.WriteLine(useEnglish ? "Хотите сохранить этот пароль? (да/нет):" : "Do you want to save this password? (yes/no):");
+        string response = Console.ReadLine().Trim();
+        return response.Equals(useEnglish ? "yes" : "да", StringComparison.OrdinalIgnoreCase);
+    }
+
+    static void CheckPasswordComplexity(string password, bool useEnglish)
+    {
+        int lengthScore = Math.Min(password.Length, 5);
+        int digitScore = password.Any(char.IsDigit) ? 5 : 0;
+        int uppercaseScore = password.Any(char.IsUpper) ? 5 : 0;
+        int totalScore = lengthScore + digitScore + uppercaseScore;
+
+        int maxScore = 15; // Максимальный балл
+
+        Console.WriteLine(useEnglish ? $"Ваш пароль безопасен на {totalScore}/{maxScore}" : $"Your password is strong on {totalScore}/{maxScore}");
     }
 }
