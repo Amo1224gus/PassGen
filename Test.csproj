@@ -5,11 +5,11 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <ApplicationIcon>загрузка.ico</ApplicationIcon>
+    <ApplicationIcon>WA.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="загрузка.ico" />
+    <Content Include="WA.ico" />
   </ItemGroup>
 
 </Project>
